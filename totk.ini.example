@@ -298,6 +298,7 @@
 # (docs/controls.md, "Xbox button prompts"). pc: the key or mouse button the keyboard defaults press each button with
 # (E, Shift, Space, left click, Q, R, right click, F, Tab, M, 1 to 4, W A S D, Ctrl, C) and the mouse for the right
 # stick, whatever pad_layout (docs/controls.md, "PC button prompts").
+# auto: pc without a gamepad at start, xbox with one (nintendo for a pad labelled the Nintendo way).
 # prompts = nintendo
 # Gamepad stick dead zone in percent of full deflection (0 to 50). Raise it for a stick that drifts: inside the circle
 # the stick reads centred, and the rest of its travel is scaled to start there.

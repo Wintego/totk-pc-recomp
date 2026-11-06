@@ -34,6 +34,7 @@
 #include "cfg.h"
 #include "fs.h"
 #include "host.h"
+#include "input.h"
 #include "input_map.h"
 #include "mods.h"
 #include "romfs_config.h"
@@ -946,6 +947,13 @@ static void overlay_init(void) {
     }
     const char *layout = cfg_value("TOTK_PAD_LAYOUT");
     int pick = input_prompts_pick(cfg_get("TOTK_PROMPTS"), layout);
+    if (pick == PROMPTS_AUTO) {
+        int east_a, gamepad = input_pad_probe(&east_a);
+        pick = input_prompts_auto(gamepad, east_a);
+        static const char *const shown[] = {"the game's own", "Xbox", "PC"};
+        rt_log("RomFS overlay: prompts = auto: %s, so the %s prompts",
+               !gamepad ? "no gamepad" : east_a ? "a gamepad labelled the Nintendo way" : "a gamepad", shown[pick]);
+    }
     const char *style = pick == PROMPTS_PC ? "keyboard and mouse" : "Xbox";
     prompts_wanted = input_prompts_folder(pick, layout);
     const char *wanted_dir = prompts_wanted;

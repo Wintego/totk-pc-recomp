@@ -784,6 +784,20 @@ int input_pad_label(int pad_id) {
     return (int)plat_cas32(&pad_labels[pad_id - PAD_SOUTH], 0, 0);
 }
 
+int input_pad_probe(int *east_labelled_a) {
+    *east_labelled_a = 0;
+    const char *e = cfg_get("TOTK_INPUT");
+    if (e && !strcmp(e, "none")) return 0;
+    if (!SDL_InitSubSystem(SDL_INIT_GAMEPAD)) return 0;   // counted: start() initialises it once more, and it stays
+    int n = 0;
+    SDL_JoystickID *ids = SDL_GetGamepads(&n);
+    if (ids && n > 0)
+        *east_labelled_a = SDL_GetGamepadButtonLabelForType(SDL_GetGamepadTypeForID(ids[0]), SDL_GAMEPAD_BUTTON_EAST) ==
+                           SDL_GAMEPAD_BUTTON_LABEL_A;
+    SDL_free(ids);
+    return n > 0;
+}
+
 void input_map_snapshot(InputMap *m) {
     plat_mutex_lock(&lock);
     if (!state) start();

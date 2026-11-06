@@ -59,6 +59,9 @@ int input_pad_stick_percent(double pct[2]);
 enum { PAD_LABEL_NONE, PAD_LABEL_A, PAD_LABEL_B, PAD_LABEL_X, PAD_LABEL_Y, PAD_LABEL_CROSS, PAD_LABEL_CIRCLE,
        PAD_LABEL_SQUARE, PAD_LABEL_TRIANGLE };
 int input_pad_label(int pad);
+// prompts = auto at start (romfs.c overlay_init, before input_poll opens a gamepad): 1 when a gamepad is connected,
+// *east_labelled_a when the first one labels its east face button A. 0 with TOTK_INPUT=none or without SDL's gamepads.
+int input_pad_probe(int *east_labelled_a);
 // The menu's remapping rows (Controls tab). input_map_snapshot copies the tables in effect (after any changed TOTK_BIND_* line).
 // input_capture polls the keys, the mouse buttons and the gamepad for a press: reset 1 takes what is held now as the
 // start (a held key counts once released and pressed again) and returns NONE; then it returns KEY or PAD with *id the

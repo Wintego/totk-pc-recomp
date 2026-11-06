@@ -249,10 +249,12 @@ static const char *const text_en[UI_TEXT_COUNT] = {
                              "RB, LT, RT, Menu, View and a d-pad cross, and A, B, X and Y as labelled on the button "
                              "the layout above presses (with Nintendo (A right) the right button is labelled B, so the "
                              "prompts for A show B). PC: the keys and mouse buttons of the keyboard's default layout "
-                             "(E, Shift, Space, left click...) and the mouse for the camera. The game reads its prompts "
+                             "(E, Shift, Space, left click...) and the mouse for the camera. Auto: PC without a "
+                             "gamepad, Xbox with one (the game's own for a Nintendo pad). The game reads its prompts "
                              "at start, so they change after a restart. They are part of the game's files, so a button "
                              "you remap in Controls keeps its old prompt on screen.",
     [UI_MENU_PROMPTS_NINTENDO] = "Nintendo", [UI_MENU_PROMPTS_XBOX] = "Xbox", [UI_MENU_PROMPTS_PC] = "PC",
+    [UI_MENU_PROMPTS_AUTO] = "Auto",
     [UI_MENU_PROMPTS_MISSING] = "prompt files missing: run the setup again",
     [UI_MENU_PROMPTS_FAILED] = "prompt files damaged: run the setup again",
     [UI_MENU_PROMPTS_RESTART] = "prompts change after restart",
@@ -717,10 +719,12 @@ static const char *const text_ru[UI_TEXT_COUNT] = {
                              "LB, RB, LT, RT, Menu, View и крестовина, а A, B, X и Y подписаны так же, как кнопка, "
                              "которую нажимает раскладка выше (в Nintendo (A справа) правая кнопка подписана B, и "
                              "подсказки A показывают B). PC: клавиши и кнопки мыши стандартной раскладки клавиатуры "
-                             "(E, Shift, пробел, левый клик...) и мышь для камеры. Игра читает подсказки при запуске, "
+                             "(E, Shift, пробел, левый клик...) и мышь для камеры. Авто: PC без геймпада, Xbox с ним "
+                             "(подсказки самой игры для геймпада Nintendo). Игра читает подсказки при запуске, "
                              "так что они меняются после перезапуска. Подсказки записаны в файлах игры, поэтому у "
                              "кнопки, переназначенной на вкладке управления, на экране остаётся прежняя подсказка.",
     [UI_MENU_PROMPTS_NINTENDO] = "Nintendo", [UI_MENU_PROMPTS_XBOX] = "Xbox", [UI_MENU_PROMPTS_PC] = "PC",
+    [UI_MENU_PROMPTS_AUTO] = "Авто",
     [UI_MENU_PROMPTS_MISSING] = "нет файлов подсказок: запустите установку снова",
     [UI_MENU_PROMPTS_FAILED] = "файлы подсказок повреждены: запустите установку снова",
     [UI_MENU_PROMPTS_RESTART] = "подсказки сменятся после перезапуска",
@@ -1362,13 +1366,15 @@ static const char *const text_pt_br[UI_TEXT_COUNT] = {
                              "Xbox: LB, RB, LT, RT, Menu, Exibir e uma cruz direcional, e A, B, X e Y com a letra do "
                              "botão que o layout acima aperta (com Nintendo (A à direita) o botão da direita tem a "
                              "letra B, então os ícones de A mostram B). PC: as teclas e os botões do mouse do layout "
-                             "padrão do teclado (E, Shift, Espaço, clique esquerdo...) e o mouse para a câmera. O jogo "
-                             "lê os ícones ao iniciar, então eles mudam depois de reiniciar. Eles fazem parte dos "
-                             "arquivos do jogo, então um botão remapeado em Controles continua com o ícone antigo na "
-                             "tela.",
+                             "padrão do teclado (E, Shift, Espaço, clique esquerdo...) e o mouse para a câmera. "
+                             "Automático: PC sem controle, Xbox com um (os do próprio jogo para um controle Nintendo). "
+                             "O jogo lê os ícones ao iniciar, então eles mudam depois de reiniciar. Eles fazem parte "
+                             "dos arquivos do jogo, então um botão remapeado em Controles continua com o ícone antigo "
+                             "na tela.",
     [UI_MENU_PROMPTS_NINTENDO] = "Nintendo",
     [UI_MENU_PROMPTS_XBOX] = "Xbox",
     [UI_MENU_PROMPTS_PC] = "PC",
+    [UI_MENU_PROMPTS_AUTO] = "Automático",
     [UI_MENU_MOUSE_MODE] = "Câmera com o mouse",
     [UI_MENU_MOUSE_MODE_DESC] = "Direta: a câmera gira o quanto o mouse se move, como num jogo de PC, sem zona morta nem curva do analógico (jogos 1.4.3 e 1.2.1; o 1.1.0 usa a emulação do analógico). Emulação do analógico: o mouse age como o analógico direito.",
     [UI_MENU_MOUSE_STICK] = "Emulação do analógico",
@@ -1978,10 +1984,12 @@ static const char *const text_zh_hans[UI_TEXT_COUNT] = {
     [UI_MENU_PROMPTS_DESC] = "游戏的按键提示显示哪种手柄的按键。Nintendo：游戏原有的提示。Xbox：LB、RB、LT、RT、Menu、View 和十字键，以及上方布局所按下的按键上标注的 "
                              "A、B、X、Y（使用 Nintendo（A 在右）时右侧按键标为 B，因此 A 的提示显示 "
                              "B）。PC：键盘默认布局的按键和鼠标按键（E、Shift、空格、左键……），镜头用鼠标。"
+                             "自动：未连接手柄时为 PC，连接手柄时为 Xbox（Nintendo 手柄为游戏原有的提示）。"
                              "游戏在启动时读取按键提示，因此重启后才会改变。提示属于游戏文件，在“操作”中重新映射的按键在屏幕上仍显示原来的提示。",
     [UI_MENU_PROMPTS_NINTENDO] = "Nintendo",
     [UI_MENU_PROMPTS_XBOX] = "Xbox",
     [UI_MENU_PROMPTS_PC] = "PC",
+    [UI_MENU_PROMPTS_AUTO] = "自动",
     [UI_MENU_MOUSE_MODE] = "鼠标视角",
     [UI_MENU_MOUSE_MODE_DESC] = "直接：镜头按鼠标移动的距离转动，与电脑游戏相同，没有摇杆死区和响应曲线（游戏 1.4.3 和 1.2.1；1.1.0 使用摇杆模拟）。摇杆模拟：鼠标相当于右摇杆。",
     [UI_MENU_MOUSE_STICK] = "摇杆模拟",

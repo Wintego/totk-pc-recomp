@@ -774,8 +774,18 @@ static void row_walk_key(void) {
 static const char *prompts_note(bool *restart) {
     *restart = false;
     const char *layout = cfg_value("TOTK_PAD_LAYOUT"), *used = romfs_prompts();
-    const char *want = input_prompts_folder(input_prompts_pick(cfg_get("TOTK_PROMPTS"), layout), layout);
-    if (want == used || (want && used && !strcmp(want, used))) return nullptr;
+    // Auto follows the device: the gamepad open now (PAD_LABEL_A on its east button: labelled the Nintendo way), or
+    // none. Plugged in or out since the start, the prompts it asks for change at the next start, as for a choice.
+    int pick = input_prompts_pick(cfg_get("TOTK_PROMPTS"), layout), automatic = pick == PROMPTS_AUTO;
+    if (automatic) pick = input_prompts_auto(input_pad_layout() >= 0, input_pad_label(PAD_EAST) == PAD_LABEL_A);
+    const char *want = input_prompts_folder(pick, layout);
+    if (want == used || (want && used && !strcmp(want, used))) {
+        if (!automatic) return nullptr;
+        static const UiTextId shown[] = {UI_MENU_PROMPTS_NINTENDO, UI_MENU_PROMPTS_XBOX, UI_MENU_PROMPTS_PC};
+        static char note[96];
+        snprintf(note, sizeof note, menu_text(UI_MENU_PAD_LAYOUT_IN_USE), menu_text(shown[pick]));
+        return note;
+    }
     // A game resolution of another shape needs a prompts folder of its own (<folder>-<w>x<h>); the setup writes one for
     // each size the menu lists, so for any other size the shape is the reason, not the setup.
     int off = romfs_prompts_off(want);
@@ -833,10 +843,11 @@ static void tab_controls(float scale) {
     opt_begin("##controls", scale);
     static const UiTextId layout[] = {UI_MENU_PAD_LAYOUT_AUTO, UI_MENU_PAD_LAYOUT_NINTENDO, UI_MENU_PAD_LAYOUT_XBOX};
     opt_choice("TOTK_PAD_LAYOUT", UI_MENU_PAD_LAYOUT, layout, 3, UI_MENU_PAD_LAYOUT_DESC, pad_layout_note());
-    static const UiTextId prompts[] = {UI_MENU_PROMPTS_NINTENDO, UI_MENU_PROMPTS_XBOX, UI_MENU_PROMPTS_PC};
+    static const UiTextId prompts[] = {UI_MENU_PROMPTS_NINTENDO, UI_MENU_PROMPTS_XBOX, UI_MENU_PROMPTS_PC,
+                                       UI_MENU_PROMPTS_AUTO};
     bool restart;
     const char *note = prompts_note(&restart);
-    opt_choice("TOTK_PROMPTS", UI_MENU_PROMPTS, prompts, 3, UI_MENU_PROMPTS_DESC, note);
+    opt_choice("TOTK_PROMPTS", UI_MENU_PROMPTS, prompts, 4, UI_MENU_PROMPTS_DESC, note);
     bool ask = restart && opt_button("##restart", UI_MENU_RESTART, UI_MENU_RESTART_DESC);
     opt_toggle("TOTK_MOTION", UI_MENU_MOTION, UI_MENU_MOTION_DESC);
     opt_slider("TOTK_RUMBLE_STRENGTH", UI_MENU_RUMBLE_STRENGTH, 0, 300, UI_MENU_RUMBLE_STRENGTH_DESC, 10, "%.0f %%");

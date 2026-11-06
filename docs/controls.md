@@ -33,7 +33,7 @@ Esc is unbound in the game; it opens the settings menu and releases the mouse cu
 
 ## Xbox button prompts
 
-`TOTK_PROMPTS` (`prompts`, the *Button prompts* row on the Controls tab, read at start) picks the controller whose buttons the game's prompts show: `nintendo` (default) keeps the game's own, `xbox` shows an Xbox controller's, `pc` the keyboard and mouse (PC button prompts, below).
+`TOTK_PROMPTS` (`prompts`, the *Button prompts* row on the Controls tab, read at start) picks the controller whose buttons the game's prompts show: `nintendo` (default) keeps the game's own, `xbox` shows an Xbox controller's, `pc` the keyboard and mouse (PC button prompts, below), and `auto` picks by the device at start: `pc` without a gamepad, `nintendo` for a gamepad labelled the Nintendo way (its east button A), `xbox` for any other (`runtime/input_map.c`, `input_prompts_auto`; `input.c`, `input_pad_probe`, asks SDL before the first poll). The game reads its prompts once at start, so a gamepad connected or disconnected later changes them at the next start; the menu shows the style in use (*in use: PC*) and offers the restart when the device changed.
 
 - L, R, ZL, ZR, Plus and Minus become LB, RB, LT, RT, Menu and View, and the d-pad prompts a cross with an arrow for each direction meant. The letters on the keys are cut out in the game's own text font.
 - A, B, X and Y name the label of the button the pad layout presses, so each prompt names the button to press. `pad_layout = nintendo` plays an Xbox pad by position: the right button, labelled B, does Switch A (interact, confirm), and the bottom one, labelled A, does Switch B (run, cancel), so the prompts swap A with B and X with Y. `xbox` and `auto` put Switch A on the button labelled A, and the letters stay.

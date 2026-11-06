@@ -310,6 +310,10 @@ int probe_cfg(void) {
               EQ(input_prompts_folder(PROMPTS_PC, "xbox"), "romfs-patches-pc") &&
               EQ(input_prompts_folder(PROMPTS_PC, NULL), "romfs-patches-pc"),
           "prompts: pc shows the keyboard and mouse whatever the pad layout");
+    CHECK(input_prompts_pick("Auto", "xbox") == PROMPTS_AUTO && !input_prompts_folder(PROMPTS_AUTO, "xbox") &&
+              input_prompts_auto(0, 0) == PROMPTS_PC && input_prompts_auto(0, 1) == PROMPTS_PC &&
+              input_prompts_auto(1, 0) == PROMPTS_XBOX && input_prompts_auto(1, 1) == PROMPTS_NINTENDO,
+          "prompts: auto is PC without a gamepad, the game's own for a Nintendo-labelled one, Xbox for another");
     CHECK(input_prompts_pick(NULL, "xbox_prompts") == PROMPTS_XBOX && input_prompts_pick("nintendo", "xbox_prompts") == PROMPTS_NINTENDO,
           "prompts: 0.1.9's pad_layout = xbox_prompts means Xbox while prompts is unset");
     CHECK(!input_prompts_folder(PROMPTS_NINTENDO, "nintendo") && !input_prompts_folder(PROMPTS_NINTENDO, "xbox"),
