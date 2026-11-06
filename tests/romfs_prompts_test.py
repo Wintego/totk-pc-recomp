@@ -564,6 +564,22 @@ class PromptsTest(unittest.TestCase):
         self.assertEqual({b: panes[f'T_{b}_00'] for b in PC_PANES}, {**PC_PANES, 'A': 'F'})
         self.assertEqual(icons.pc_binds(ini.read_text(encoding='utf-8')), {**icons.PC_BINDS, 'A': 'f'})
 
+    def test_reuse_takes_all_but_the_common_archive_from_a_full_run(self):
+        romfs = self.romfs['v143']
+        full = self.outs['v143', 'pc'][0]
+        out = self.base / 'reuse' / 'out'
+        proc = romfs.run(out, '--prompts', 'pc', '--reuse', str(full))
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(manifest(out), manifest(full))   # the same files, byte for byte
+        reused = json.loads(proc.stdout.strip().splitlines()[-1])['prompts']['reused']
+        self.assertEqual(set(reused), set(manifest(full)) - {romfs.common})
+        # A folder made from another game's files is refused before anything is written.
+        other = Romfs(self.base / 'reuse' / 'other' / 'romfs', 'v121')
+        bad = self.base / 'reuse' / 'bad'
+        proc = other.run(bad, '--prompts', 'pc', '--reuse', str(self.outs['v121', 'xbox-label'][0]))
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertFalse(bad.exists(), 'a failed run writes nothing')
+
     def test_same_input_same_output_and_the_older_flag(self):
         romfs = self.romfs['v121']
         for flags in (('--prompts', 'xbox'), ('--xbox-prompts',)):

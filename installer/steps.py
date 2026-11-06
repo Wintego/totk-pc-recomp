@@ -8,7 +8,7 @@ with the bundled clang (hostcheck.c).
 
 Install folder: exefs/, romfs/ (romfs.bin, index.json), profile/, shared-fonts/ (Chinese and Korean text), totk.exe
 and its DLLs, nvngx_dlss.dll (with --dlss), romfs-index.bin, romfs-patches/, romfs-patches-xbox/,
-romfs-patches-xbox-label/, romfs-patches-pc/, totk_xlate.exe, the
+romfs-patches-xbox-label/, romfs-patches-pc/ (and each -<w>x<h>/), totk_xlate.exe, the
 shader state of totk.exe --prepare-shaders, totk.ini, totk-install.json.
 Temp folder (<temp>/<dest name>-<hash>): check/ (ExeFS of both inputs, the host check), unpacked/ (the NSP of an NSZ
 or XCZ input until the extraction is done), gen/ (C), build/ (objects), logs/. The cleanup keeps gen/, build/ and
@@ -1072,7 +1072,10 @@ class Prepare(Step):
         # input_prompts_folder). Both are written on every install, so the menu choices work without another run of
         # the setup. Optional: when one fails, the game keeps the Switch prompts with that layout and the menu says the
         # files are missing, so the setup warns once and goes on. romfs-patches-pc likewise, with keyboard and mouse
-        # prompts for prompts = pc (16:9 only: another shape takes make_romfs_patches.py --prompts pc --aspect).
+        # prompts for prompts = pc. Then <folder>-<w>x<h> of each for each of ASPECT_SIZES: the same prompts with that
+        # shape's UI layout, which runtime/romfs.c overlay_init loads in place of romfs-patches-<w>x<h>. Only their
+        # Common archive differs from the 16:9 folder, so --reuse takes the rest from it (hardlinks): seconds and a few
+        # MB a size.
         failed = None
         for style in ('xbox', 'xbox-label', 'pc'):
             out = dest / f'romfs-patches-{style}'
@@ -1083,6 +1086,19 @@ class Prepare(Step):
             if code:
                 remove(out)
                 failed = failed or (code, log)
+        for style in ('xbox', 'xbox-label', 'pc'):
+            plain = dest / f'romfs-patches-{style}'
+            for size in ASPECT_SIZES:
+                out = dest / f'romfs-patches-{style}-{size}'
+                remove(out)
+                if not (plain / 'manifest.tsv').is_file():
+                    continue
+                code, log = run_tool(ctx, f'prepare-{style}', layout.tools / 'make_romfs_patches.py',
+                                     ['--version', version_tag(game_version(ctx)), '--romfs', dest / 'romfs', '--out',
+                                      out, '--prompts', style, '--aspect', size, '--reuse', plain])
+                if code:
+                    remove(out)
+                    failed = failed or (code, log)
         if failed:
             rep.warning('warn.xbox_prompts_failed', code=failed[0], log=str(failed[1]))
 

@@ -52,7 +52,9 @@ import compression.zstd as zstd
 import hashlib
 import importlib.util
 import json
+import os
 import re
+import shutil
 import struct
 from pathlib import Path
 
@@ -68,9 +70,16 @@ ap.add_argument('--prompts', choices=('xbox', 'xbox-label', 'pc'),
                      'xbox-label for pad_layout = xbox or auto (the face buttons keep their letters), '
                      'pc for the keyboard and mouse')
 ap.add_argument('--binds', type=Path, help='--prompts pc: a totk.ini whose bind_ lines the key icons follow')
+ap.add_argument('--reuse', type=Path,
+                help='with --prompts: the folder of an earlier run of the same style (and --binds) for the same game; '
+                     'every file but the Common archive is taken from it, hardlinked or else copied, instead of being '
+                     'made again. Only the Common archive differs between the shapes of --aspect, so the setup makes '
+                     'romfs-patches-pc once and each romfs-patches-pc-<w>x<h> from it in seconds.')
 ap.add_argument('--xbox-prompts', dest='prompts', action='store_const', const='xbox', help='the same as --prompts xbox')
 args = ap.parse_args()
 args.romfs = args.romfs or root / 'build/extracted' / args.version / 'romfs'
+if args.reuse and not args.prompts:
+    ap.error('--reuse needs --prompts')
 args.out = args.out or root / 'build' / args.version / (f'romfs-patches-{args.prompts}' if args.prompts else 'romfs-patches')
 index = json.loads((args.romfs / 'index.json').read_text())
 assert index['status'] == 'pass'
@@ -302,7 +311,8 @@ if args.prompts:
         data = zstd.decompress(originals[path], zstd_dict=dictionaries.get(frame.dictionary_id))
         sizes[path] = len(data)
         return data
-    archives = {path: unpack(path) for path in FONTS}
+    # With --reuse only the text archive is read: its text fonts draw the icons into the Common archive's images.
+    archives = {path: unpack(path) for path in FONTS if not args.reuse or path == icons.TEXT_ARCHIVE}
     text = sarc_members(archives[icons.TEXT_ARCHIVE])
     missing = [name for name in icons.TEXT_FONTS if name not in text]
     assert not missing, f'no {", ".join(missing)} in {icons.TEXT_ARCHIVE}'
@@ -328,6 +338,22 @@ if args.prompts:
         assert 'blyt/DoCommand_00.bflyt' in letters, 'no letter panes in blyt/DoCommand_00.bflyt'
     hud = icons.bntx_redraw(blarc, bntx, icons.PC_HUD_TEXTURES if pc else icons.HUD_TEXTURES, drawn)
     outputs[ARCHIVE] = bytes(blarc)
+    reused = []   # (path, size, sha256, original sha256) of the files --reuse gives, the same as a full run makes them
+    if args.reuse:
+        # The fonts, messages and size table do not depend on --aspect; the Common archive is edited in place, so it
+        # never grows and needs no size table entry of its own.
+        assert len(blarc) == len(original), 'the Common archive grew'
+        rows = {line.split('\t')[0]: line.split('\t') for line in (args.reuse / 'manifest.tsv').read_text().splitlines()
+                if line and not line.startswith('#')}
+        # what a full run writes besides the Common archive: the fonts, the messages, the size table when a font grew
+        for path in [p for p in prompt_files if p != RESTBL or p in rows]:
+            assert path in rows, f'{args.reuse} has no {path}'
+            _, size, sha, orig = rows[path]
+            assert orig == hashlib.sha256(originals[path]).hexdigest(), f'{args.reuse}: {path} is of another game'
+            data = (args.reuse / path).read_bytes()
+            assert (len(data), hashlib.sha256(data).hexdigest()) == (int(size), sha), f'{args.reuse}: {path} damaged'
+            reused.append((path, size, sha, orig))
+        archives = {}
     fonts = {}   # each distinct font is drawn once (1.4.3's four archives hold the same one)
     for path, bfarc in archives.items():
         lo, hi = sarc_members(bfarc)[icons.FONT]
@@ -336,7 +362,7 @@ if args.prompts:
             fonts[otf] = icons.redraw_font(otf, drawn, KEY_GLYPHS if by_position else ())
         outputs[path] = sarc_replace(bfarc, {icons.FONT: icons.bfotf_encode(fonts[otf], key, bfarc[lo:hi])})
     messages = {}
-    for path in MALS if letter_panes else []:
+    for path in MALS if letter_panes and not args.reuse else []:
         mals = bytearray(unpack(path))
         lo, hi = sarc_members(mals)[LAYOUT_MSG]
         msbt = bytearray(mals[lo:hi])
@@ -350,7 +376,8 @@ if args.prompts:
     if grown:
         outputs[RESTBL] = icons.grow_restbl(unpack(RESTBL), grown)
     prompts = dict(style=args.prompts, textures=KEY_TEXTURES if by_position else [], letters=letters,
-                   messages=messages, hud=hud, icons=len(drawn), fonts=FONTS, grown=grown)
+                   messages=messages, hud=hud, icons=len(drawn), fonts=FONTS, grown=grown,
+                   reused=[path for path, *_ in reused])
 
 lines = []
 for path, contents in outputs.items():
@@ -363,6 +390,16 @@ for path, contents in outputs.items():
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(data)
     lines.append('\t'.join([path, str(len(data)), hashlib.sha256(data).hexdigest(), hashlib.sha256(raw).hexdigest()]))
+for path, size, sha, orig in reused if prompts else []:
+    target = args.out / path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if target.exists():
+        target.unlink()
+    try:
+        os.link(args.reuse / path, target)   # the same bytes in each shape's folder, stored once where the disk allows
+    except OSError:
+        shutil.copyfile(args.reuse / path, target)
+    lines.append('\t'.join([path, size, sha, orig]))
 (args.out / 'manifest.tsv').write_text('# path\tsize\tsha256\toriginal_sha256 (tools/make_romfs_patches.py)\n'
                                        + ''.join(line + '\n' for line in lines))
 print(json.dumps(dict(status='pass', path=ARCHIVE, members=patched, changed_bytes=len(diff),

@@ -335,8 +335,8 @@ static const char *raw_get(const char *name) {
 // picture between black bars. The sizes are the ones the installer lays the HUD out for (installer/steps.py
 // ASPECT_SIZES, ui/menu.cpp row_output_res): of the display's shape within 1%, the smallest at least 1080 high that fits
 // the display, else the largest that fits. A 16:9 display, an unknown one or one of another shape keeps 1920x1080.
-// Xbox or keyboard prompts keep 1920x1080 too: the setup builds their folders for 16:9 only (romfs.c overlay_init), so
-// a default of another shape would trade the prompts the player chose for the Switch ones.
+// The Xbox and PC prompts have a folder for each of these sizes (romfs-patches-<style>-<w>x<h>, installer/steps.py), so
+// they keep the display's shape as well.
 static const unsigned SHAPED[][2] = {
     {2560, 1080}, {3440, 1440}, {3840, 1600}, {5120, 2160},             // 21:9
     {3840, 1080}, {5120, 1440},                                         // 32:9
@@ -344,11 +344,6 @@ static const unsigned SHAPED[][2] = {
     {1920, 1280}, {2160, 1440}, {2256, 1504}, {2880, 1920}, {3000, 2000}, // 3:2
 };
 static char screen_res[16];   // set once by cfg_init, "" for none
-
-static int switch_prompts(void) {
-    const char *p = raw_get(PREFIX "PROMPTS"), *l = raw_get(PREFIX "PAD_LAYOUT");
-    return (!p || !strcasecmp(p, "nintendo")) && !(l && !strcasecmp(l, "xbox_prompts"));
-}
 
 static void screen_default(void) {
     int sw, sh;
@@ -365,7 +360,7 @@ static void screen_default(void) {
     if (best < 0) best = fit;
     if (best < 0) return;
     snprintf(screen_res, sizeof screen_res, "%ux%u", SHAPED[best][0], SHAPED[best][1]);
-    if (!raw_get(PREFIX "OUTPUT_RES") && switch_prompts())
+    if (!raw_get(PREFIX "OUTPUT_RES"))
         rt_log("cfg: the display is %dx%d: output_res defaults to %s, its shape (totk.ini output_res sets another)", sw,
                sh, screen_res);
 }
@@ -374,7 +369,7 @@ const char *cfg_get(const char *name) {
     const char *v = raw_get(name);
     if (v || strncmp(name, PREFIX, PREFIX_LEN)) return v;
     if (!profile_of())
-        return screen_res[0] && !strcasecmp(name + PREFIX_LEN, "OUTPUT_RES") && switch_prompts() ? screen_res : NULL;
+        return screen_res[0] && !strcasecmp(name + PREFIX_LEN, "OUTPUT_RES") ? screen_res : NULL;
     for (size_t i = 0; i < sizeof DECK / sizeof *DECK; i++)
         if (!strcasecmp(DECK[i].key, name + PREFIX_LEN)) return DECK[i].value;
     return NULL;
